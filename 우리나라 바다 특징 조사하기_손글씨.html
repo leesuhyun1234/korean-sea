@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>우리나라 바다 조사하기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;font-family:'Pretendard','Noto Sans KR',-apple-system,sans-serif;background:#eaf4fb;color:#1f2937;overscroll-behavior:none;}
+  body{padding:18px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+  h1{font-size:42px;text-align:center;margin-bottom:10px;color:#0e4e7c;}
+  h2{font-size:34px;text-align:center;margin-bottom:18px;color:#0e4e7c;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;font-size:22px;font-weight:700;border:none;border-radius:14px;background:#0e4e7c;color:#fff;cursor:pointer;}
+  .btn:active{transform:scale(0.96);}
+  .btn-light{background:#fff;color:#0e4e7c;border:3px solid #0e4e7c;}
+  .btn-east{background:#1d4ed8;}
+  .btn-west{background:#d97706;}
+  .btn-south{background:#15803d;}
+  .btn-report{background:#7c3aed;}
+  .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px;}
+  .home-btn{padding:36px 18px;font-size:30px;font-weight:800;border:none;border-radius:20px;color:#fff;cursor:pointer;line-height:1.3;}
+  .home-btn:active{transform:scale(0.97);}
+  .steps{display:flex;justify-content:center;gap:10px;margin:8px 0 18px;}
+  .step{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;background:#cbd5e1;color:#fff;}
+  .step.active{background:#0e4e7c;}
+  .card{background:#fff;border-radius:18px;padding:22px;margin-bottom:14px;border:2px solid #d1d5db;}
+  .photo-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .photo{width:240px;height:240px;border-radius:14px;object-fit:cover;border:3px solid #d1d5db;background:#e5e7eb;}
+  .feat{display:flex;gap:18px;align-items:center;background:#f0f9ff;border-radius:14px;padding:14px;margin-bottom:12px;border:2px solid #bae6fd;}
+  .feat img{width:160px;height:160px;border-radius:12px;object-fit:cover;border:2px solid #bae6fd;}
+  .feat .ftxt{font-size:28px;font-weight:800;color:#0e4e7c;}
+  .nav-row{display:flex;justify-content:space-between;margin-top:16px;gap:10px;flex-wrap:wrap;}
+  .nav-row .btn{flex:1;min-width:120px;}
+  .map-wrap{display:flex;justify-content:center;margin:10px 0;}
+  .map-wrap svg{width:min(360px,80vw);height:auto;}
+  .lv-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-top:60px;}
+  .lv-btn{padding:80px 0;font-size:80px;font-weight:900;border:none;border-radius:22px;color:#fff;cursor:pointer;}
+  .lv-btn.ga{background:#2563eb;}
+  .lv-btn.na{background:#0d9488;}
+  .lv-btn.da{background:#db2777;}
+  .lv-btn:active{transform:scale(0.97);}
+  .q-block{margin-bottom:22px;padding-bottom:18px;border-bottom:2px dashed #cbd5e1;}
+  .q-block:last-of-type{border-bottom:none;}
+  .q-title{font-size:24px;font-weight:800;margin-bottom:10px;color:#0e4e7c;}
+  .choices{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+  .choice-photo{position:relative;border-radius:14px;overflow:hidden;border:4px solid transparent;cursor:pointer;background:#fff;}
+  .choice-photo img{width:180px;height:180px;object-fit:cover;display:block;}
+  .choice-photo.correct{border-color:#16a34a;}
+  .choice-photo.wrong{border-color:#dc2626;opacity:0.55;}
+  .input-box{font-size:28px;padding:8px 12px;border:3px solid #94a3b8;border-radius:10px;width:180px;text-align:center;font-weight:800;background:#fffbeb;}
+  .input-box.correct{border-color:#16a34a;background:#dcfce7;}
+  .input-box.wrong{border-color:#dc2626;background:#fee2e2;}
+  .blank-line{font-size:24px;margin:10px 0;line-height:2;}
+  .feedback{display:inline-block;font-size:24px;margin-left:10px;font-weight:700;}
+  .save-btn{background:#16a34a;color:#fff;}
+  .name-row{display:flex;gap:12px;align-items:center;margin-bottom:14px;font-size:20px;flex-wrap:wrap;}
+  .name-row input{font-size:20px;padding:8px 12px;border:2px solid #94a3b8;border-radius:8px;flex:1;min-width:140px;}
+  .trace{color:#cbd5e1;font-weight:900;letter-spacing:3px;}
+  .map-quiz{position:relative;display:inline-block;}
+  .sea-region{cursor:pointer;transition:fill 0.2s;}
+  .sea-region.tapped{fill:#fbbf24 !important;}
+  .sea-input{position:absolute;background:transparent;border:none;text-align:center;font-size:24px;font-weight:900;color:#0e4e7c;width:100px;}
+  @media (max-width:600px){
+    .photo{width:42vw;height:42vw;}
+    .home-btn{font-size:24px;padding:24px 10px;}
+    .lv-btn{font-size:56px;padding:40px 0;}
+    h1{font-size:32px;}h2{font-size:26px;}
+    .choice-photo img{width:36vw;height:36vw;}
+  }
+
+.hw-canvas{
+  border:2px dashed #94a3b8;
+  border-radius:8px;
+  background:#fff;
+  touch-action:none;
+  cursor:crosshair;
+  display:inline-block;
+}
+.hw-clear{
+  font-size:14px;
+  padding:4px 8px;
+  border:1px solid #cbd5e1;
+  background:#f1f5f9;
+  border-radius:6px;
+  cursor:pointer;
+  color:#475569;
+}
+.hw-clear:hover{ background:#e2e8f0; }
+.hw-wrap{ margin: 4px 0; }
+
+</style>
+</head>
+<body>
+
+<div id="home" class="screen active">
+  <h1>우리나라 바다 조사하기</h1>
+  <p style="text-align:center;font-size:22px;color:#475569;">알아보고 싶은 바다를 선택해 주세요</p>
+  <div class="home-grid">
+    <button class="home-btn btn-east" onclick="show('sea_east')">🌅<br>동해<br>알아보기</button>
+    <button class="home-btn btn-west" onclick="show('sea_west')">🏖️<br>서해<br>알아보기</button>
+    <button class="home-btn btn-south" onclick="show('sea_south')">🏝️<br>남해<br>알아보기</button>
+    <button class="home-btn btn-report" onclick="show('report_menu')">📝<br>보고서<br>작성하기</button>
+  </div>
+</div>
+
+<div id="sea_east" class="screen">
+  <div class="topbar">
+    <button class="btn btn-light" onclick="show('home')">🏠 처음으로</button>
+    <h2 style="margin:0;">🌅 동해 알아보기</h2>
+    <div style="width:170px;"></div>
+  </div>
+  <div class="steps" id="sea_east_steps"><div class="step active">1</div><div class="step">2</div><div class="step">3</div></div>
+  <div class="card" id="sea_east_p1">
+    <h2 style="font-size:28px;">1. 동해의 위치</h2>
+    <div class="map-wrap"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="395" y="0" width="169" height="290" fill="#1d4ed8" fill-opacity="0.45" stroke="#0e4e7c" stroke-width="3" rx="8"/>
+  <text x="479.5" y="155.0" text-anchor="middle" fill="#ffffff" font-size="32" font-weight="800" stroke="#0e4e7c" stroke-width="1">동해</text>
+</svg></div>
+    <p style="text-align:center;font-size:24px;font-weight:700;color:#0e4e7c;">우리나라의 동(오른쪽)쪽 바다예요</p>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_east',2)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_east_p2" style="display:none;">
+    <h2 style="font-size:28px;">2. 동해의 모습</h2>
+    <div class="photo-row"><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/qO4NUdLKLEawiX88R3m2XU3W8Swagf8L8Mwa3SpY.png" alt="일출"><div style="margin-top:6px;font-size:20px;font-weight:700;">일출</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png" alt="해수욕장"><div style="margin-top:6px;font-size:20px;font-weight:700;">해수욕장</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/ahW6WqSjCxgny9yjVlsZaqTkTH5Bb5lTjvEKiynt.png" alt="단조로운 해안선"><div style="margin-top:6px;font-size:20px;font-weight:700;">단조로운 해안선</div></div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_east',1)">◀ 이전</button>
+      <button class="btn btn-light" onclick="goStep('sea_east',3)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_east_p3" style="display:none;">
+    <h2 style="font-size:28px;">3. 동해의 특징</h2>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/ahW6WqSjCxgny9yjVlsZaqTkTH5Bb5lTjvEKiynt.png" alt=""><div class="ftxt">① 해안선이 단조롭다</div></div>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png" alt=""><div class="ftxt">② 해수욕장이 많다</div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_east',2)">◀ 이전</button>
+      <button class="btn" onclick="show('home')">🏠 처음으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="sea_west" class="screen">
+  <div class="topbar">
+    <button class="btn btn-light" onclick="show('home')">🏠 처음으로</button>
+    <h2 style="margin:0;">🏖️ 서해 알아보기</h2>
+    <div style="width:170px;"></div>
+  </div>
+  <div class="steps" id="sea_west_steps"><div class="step active">1</div><div class="step">2</div><div class="step">3</div></div>
+  <div class="card" id="sea_west_p1">
+    <h2 style="font-size:28px;">1. 서해의 위치</h2>
+    <div class="map-wrap"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="170" height="290" fill="#fde68a" fill-opacity="0.55" stroke="#92400e" stroke-width="3" rx="8"/>
+  <text x="85.0" y="155.0" text-anchor="middle" fill="#92400e" font-size="32" font-weight="800">서해</text>
+</svg></div>
+    <p style="text-align:center;font-size:24px;font-weight:700;color:#0e4e7c;">우리나라의 서(왼쪽)쪽 바다예요</p>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_west',2)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_west_p2" style="display:none;">
+    <h2 style="font-size:28px;">2. 서해의 모습</h2>
+    <div class="photo-row"><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png" alt="갯벌"><div style="margin-top:6px;font-size:20px;font-weight:700;">갯벌</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/tdjsbvjWF1ejVyk39KBmxpeuiCu2ClnOQ2Q7C5hG.png" alt="낙조"><div style="margin-top:6px;font-size:20px;font-weight:700;">낙조</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/fyqDT7RM3gFyVsq2sUZ9gYvUvEX9ADOinVfDFG7j.png" alt="복잡한 해안선"><div style="margin-top:6px;font-size:20px;font-weight:700;">복잡한 해안선</div></div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_west',1)">◀ 이전</button>
+      <button class="btn btn-light" onclick="goStep('sea_west',3)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_west_p3" style="display:none;">
+    <h2 style="font-size:28px;">3. 서해의 특징</h2>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/fyqDT7RM3gFyVsq2sUZ9gYvUvEX9ADOinVfDFG7j.png" alt=""><div class="ftxt">① 해안선이 복잡하다</div></div>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png" alt=""><div class="ftxt">② 갯벌이 많다</div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_west',2)">◀ 이전</button>
+      <button class="btn" onclick="show('home')">🏠 처음으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="sea_south" class="screen">
+  <div class="topbar">
+    <button class="btn btn-light" onclick="show('home')">🏠 처음으로</button>
+    <h2 style="margin:0;">🏝️ 남해 알아보기</h2>
+    <div style="width:170px;"></div>
+  </div>
+  <div class="steps" id="sea_south_steps"><div class="step active">1</div><div class="step">2</div><div class="step">3</div></div>
+  <div class="card" id="sea_south_p1">
+    <h2 style="font-size:28px;">1. 남해의 위치</h2>
+    <div class="map-wrap"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="290" width="564" height="78" fill="#bbf7d0" fill-opacity="0.6" stroke="#0e4e7c" stroke-width="3" rx="8"/>
+  <text x="282.0" y="339.0" text-anchor="middle" fill="#15803d" font-size="32" font-weight="800">남해</text>
+</svg></div>
+    <p style="text-align:center;font-size:24px;font-weight:700;color:#0e4e7c;">우리나라의 남(아래)쪽 바다예요</p>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_south',2)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_south_p2" style="display:none;">
+    <h2 style="font-size:28px;">2. 남해의 모습</h2>
+    <div class="photo-row"><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png" alt="섬이 많은 모습"><div style="margin-top:6px;font-size:20px;font-weight:700;">섬이 많은 모습</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/grE48XLk78DFtGIUU8RZFYfutiLTd2za5Y03tp1m.png" alt="남해 풍경"><div style="margin-top:6px;font-size:20px;font-weight:700;">남해 풍경</div></div><div style="text-align:center;"><img class="photo" src="https://images.wrks.ai/dalle/b1jnvKjL1dl86vv7amc2tmpbMiajHcVNNShq89rZ.png" alt="복잡한 해안선"><div style="margin-top:6px;font-size:20px;font-weight:700;">복잡한 해안선</div></div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_south',1)">◀ 이전</button>
+      <button class="btn btn-light" onclick="goStep('sea_south',3)">다음 ▶</button>
+    </div>
+  </div>
+  <div class="card" id="sea_south_p3" style="display:none;">
+    <h2 style="font-size:28px;">3. 남해의 특징</h2>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/b1jnvKjL1dl86vv7amc2tmpbMiajHcVNNShq89rZ.png" alt=""><div class="ftxt">① 해안선이 복잡하다</div></div>
+    <div class="feat"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png" alt=""><div class="ftxt">② 섬이 많다</div></div>
+    <div class="nav-row">
+      <button class="btn btn-light" onclick="goStep('sea_south',2)">◀ 이전</button>
+      <button class="btn" onclick="show('home')">🏠 처음으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="report_menu" class="screen">
+  <div class="topbar">
+    <button class="btn btn-light" onclick="show('home')">🏠 처음으로</button>
+    <h2 style="margin:0;">보고서 작성</h2>
+    <div style="width:170px;"></div>
+  </div>
+  <div class="lv-grid">
+    <button class="lv-btn ga" onclick="show('rep_ga')">가</button>
+    <button class="lv-btn na" onclick="show('rep_na')">나</button>
+    <button class="lv-btn da" onclick="show('rep_da')">다</button>
+  </div>
+</div>
+
+<div id="rep_ga" class="screen">
+  <div class="topbar no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <h2 style="margin:0;">보고서 - 가</h2>
+    <button class="btn save-btn" onclick="saveReport('rep_ga','가')">📷 사진으로 저장</button>
+  </div>
+
+  <div class="card">
+    <div class="name-row no-capture">
+      <label>이름:</label><input type="text" id="ga_name" placeholder="이름을 써 주세요">
+      <label>날짜:</label><input type="text" id="ga_date" placeholder="2026.06.08">
+    </div>
+    <div class="name-row" style="display:none;" id="ga_name_show"></div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">1. 지도에서 동해, 서해, 남해의 위치를 찾아 이름을 써 보세요.</div>
+    
+<div class="map-quiz">
+  <svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+    <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="395" y="0" width="169" height="290" fill="#dbeafe" fill-opacity="0.45" stroke="#0e4e7c" stroke-width="2" rx="8"/>
+    <rect x="0" y="0" width="170" height="290" fill="#fde68a" fill-opacity="0.45" stroke="#0e4e7c" stroke-width="2" rx="8"/>
+    <rect x="0" y="290" width="564" height="78" fill="#bbf7d0" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8"/>
+    <text x="479.5" y="90" text-anchor="middle" font-size="18" fill="#1e3a8a" font-weight="700">동쪽 바다</text>
+    <text x="85.0" y="90" text-anchor="middle" font-size="18" fill="#92400e" font-weight="700">서쪽 바다</text>
+    <text x="282.0" y="312" text-anchor="middle" font-size="18" fill="#15803d" font-weight="700">남쪽 바다</text>
+    <foreignObject x="429.5" y="110" width="100" height="50">
+      <input xmlns="http://www.w3.org/1999/xhtml" class="input-box" style="width:90px;font-size:24px;" placeholder="?" oninput="checkInput(this,'동해')">
+    </foreignObject>
+    <foreignObject x="35.0" y="110" width="100" height="50">
+      <input xmlns="http://www.w3.org/1999/xhtml" class="input-box" style="width:90px;font-size:24px;" placeholder="?" oninput="checkInput(this,'서해')">
+    </foreignObject>
+    <foreignObject x="232.0" y="328" width="100" height="50">
+      <input xmlns="http://www.w3.org/1999/xhtml" class="input-box" style="width:90px;font-size:24px;" placeholder="?" oninput="checkInput(this,'남해')">
+    </foreignObject>
+  </svg>
+</div>
+
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">2. 알맞은 사진을 골라 보세요.</div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">① 동해는 어느 사진일까요? (해수욕장)</div>
+      <div class="choices">
+        <div class="choice-photo" onclick="pickPhoto(this,true,'ga_q2_east')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png" alt="동해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_east')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png" alt="서해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_east')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png" alt="남해"></div>
+      </div>
+      <div class="feedback" id="fb_ga_q2_east"></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">② 서해는 어느 사진일까요? (갯벌)</div>
+      <div class="choices">
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_west')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png" alt="동해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,true,'ga_q2_west')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png" alt="서해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_west')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png" alt="남해"></div>
+      </div>
+      <div class="feedback" id="fb_ga_q2_west"></div>
+    </div>
+    <div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">③ 남해는 어느 사진일까요? (섬이 많아요)</div>
+      <div class="choices">
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_south')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png" alt="동해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,false,'ga_q2_south')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png" alt="서해"></div>
+        <div class="choice-photo" onclick="pickPhoto(this,true,'ga_q2_south')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png" alt="남해"></div>
+      </div>
+      <div class="feedback" id="fb_ga_q2_south"></div>
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">3. 빈칸에 알맞은 말을 써 보세요.</div>
+    <div class="blank-line">① 동해는 해안선이 
+      <input class="input-box" placeholder="?" oninput="checkInput(this,'단조롭다')" style="width:160px;">
+      .</div>
+    <div class="blank-line">② 서해는 
+      <input class="input-box" placeholder="?" oninput="checkInput(this,'갯벌')" style="width:120px;">
+      이/가 많다.</div>
+    <div class="blank-line">③ 남해는 
+      <input class="input-box" placeholder="?" oninput="checkInput(this,'섬')" style="width:120px;">
+      이/가 많다.</div>
+    <div style="font-size:18px;color:#64748b;margin-top:10px;">(보기: 단조롭다 / 갯벌 / 섬)</div>
+  </div>
+
+  <div class="nav-row no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <button class="btn save-btn" onclick="saveReport('rep_ga','가')">📷 사진으로 저장하기</button>
+  </div>
+</div>
+
+<div id="rep_na" class="screen">
+  <div class="topbar no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <h2 style="margin:0;">보고서 - 나</h2>
+    <button class="btn save-btn" onclick="saveReport('rep_na','나')">📷 사진으로 저장</button>
+  </div>
+
+  <div class="card">
+    <div class="name-row no-capture">
+      <label>이름:</label><input type="text" placeholder="이름을 써 주세요">
+      <label>날짜:</label><input type="text" placeholder="2026.06.08">
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">1. 색깔 바다를 눌러 이름을 찾아보세요.</div>
+    
+<div class="map-quiz">
+  <svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+    <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+    <rect class="sea-region" id="na_east" data-name="동해" x="395" y="0" width="169" height="290" fill="#93c5fd" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'동해','na_east_fb')"/>
+    <rect class="sea-region" id="na_west" data-name="서해" x="0" y="0" width="170" height="290" fill="#fcd34d" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'서해','na_west_fb')"/>
+    <rect class="sea-region" id="na_south" data-name="남해" x="0" y="290" width="564" height="78" fill="#86efac" fill-opacity="0.6" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'남해','na_south_fb')"/>
+  </svg>
+</div>
+<div style="text-align:center;font-size:20px;margin-top:6px;">
+  <div>파란색은 <span id="na_east_fb" style="font-weight:800;color:#1d4ed8;">?</span>,
+       노란색은 <span id="na_west_fb" style="font-weight:800;color:#d97706;">?</span>,
+       초록색은 <span id="na_south_fb" style="font-weight:800;color:#15803d;">?</span> 예요.</div>
+  <div style="font-size:18px;color:#64748b;margin-top:4px;">색깔 바다를 눌러 보세요</div>
+</div>
+
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">2. 동해, 서해, 남해의 사진을 골라 보세요.</div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">① 동해 (해수욕장이 많아요)</div>
+      <div class="choices"><div class="choice-photo" onclick="pickPhoto(this,true,'na_q2_east')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png"></div>
+<div class="choice-photo" onclick="pickPhoto(this,false,'na_q2_east')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png"></div></div>
+      <div class="feedback" id="fb_na_q2_east"></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">② 서해 (갯벌이 많아요)</div>
+      <div class="choices"><div class="choice-photo" onclick="pickPhoto(this,true,'na_q2_west')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png"></div>
+<div class="choice-photo" onclick="pickPhoto(this,false,'na_q2_west')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png"></div></div>
+      <div class="feedback" id="fb_na_q2_west"></div>
+    </div>
+    <div>
+      <div style="font-size:22px;font-weight:700;margin-bottom:8px;">③ 남해 (섬이 많아요)</div>
+      <div class="choices"><div class="choice-photo" onclick="pickPhoto(this,true,'na_q2_south')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png"></div>
+<div class="choice-photo" onclick="pickPhoto(this,false,'na_q2_south')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png"></div></div>
+      <div class="feedback" id="fb_na_q2_south"></div>
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">3. 회색 글자를 따라 써 보세요.</div>
+    <div class="blank-line">① 동해는 해안선이 <span class="trace">단조롭다</span>
+      <input class="input-box" placeholder="따라 써요" oninput="checkInput(this,'단조롭다')" style="width:180px;">.</div>
+    <div class="blank-line">② 서해는 <span class="trace">갯벌</span>
+      <input class="input-box" placeholder="따라 써요" oninput="checkInput(this,'갯벌')" style="width:140px;">이 많다.</div>
+    <div class="blank-line">③ 남해는 <span class="trace">섬</span>
+      <input class="input-box" placeholder="따라 써요" oninput="checkInput(this,'섬')" style="width:120px;">이 많다.</div>
+  </div>
+
+  <div class="nav-row no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <button class="btn save-btn" onclick="saveReport('rep_na','나')">📷 사진으로 저장하기</button>
+  </div>
+</div>
+
+<div id="rep_da" class="screen">
+  <div class="topbar no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <h2 style="margin:0;">보고서 - 다</h2>
+    <button class="btn save-btn" onclick="saveReport('rep_da','다')">📷 사진으로 저장</button>
+  </div>
+
+  <div class="card">
+    <div class="name-row no-capture">
+      <label>이름:</label><input type="text" placeholder="이름을 써 주세요">
+      <label>날짜:</label><input type="text" placeholder="2026.06.08">
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">1. 색깔 바다를 눌러 보세요.</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#1d4ed8;">동해를 눌러요</div>
+        <div class="map-quiz"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect class="sea-region" x="395" y="0" width="169" height="290" fill="#1d4ed8" fill-opacity="0.5" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'동해','da_east_fb')"/>
+  <rect x="0" y="0" width="170" height="290" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+  <rect x="0" y="290" width="564" height="78" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+</svg></div>
+        <div id="da_east_fb" style="font-size:24px;font-weight:800;color:#16a34a;min-height:30px;"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#d97706;">서해를 눌러요</div>
+        <div class="map-quiz"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="395" y="0" width="169" height="290" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+  <rect class="sea-region" x="0" y="0" width="170" height="290" fill="#d97706" fill-opacity="0.5" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'서해','da_west_fb')"/>
+  <rect x="0" y="290" width="564" height="78" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+</svg></div>
+        <div id="da_west_fb" style="font-size:24px;font-weight:800;color:#16a34a;min-height:30px;"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#15803d;">남해를 눌러요</div>
+        <div class="map-quiz"><svg viewBox="0 0 564 368" xmlns="http://www.w3.org/2000/svg" style="width:min(420px,90vw);height:auto;">
+  <image href="https://images.wrks.ai/dalle/LovzCm9FugOtdfdGwkCKPxUigcLr86UbQ4XtX1iR.png" x="0" y="0" width="564" height="368" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="395" y="0" width="169" height="290" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+  <rect x="0" y="0" width="170" height="290" fill="#e5e7eb" fill-opacity="0.55" stroke="#0e4e7c" stroke-width="2" rx="8" style="pointer-events:none;"/>
+  <rect class="sea-region" x="0" y="290" width="564" height="78" fill="#15803d" fill-opacity="0.5" stroke="#0e4e7c" stroke-width="2" rx="8" onclick="tapSea(this,'남해','da_south_fb')"/>
+</svg></div>
+        <div id="da_south_fb" style="font-size:24px;font-weight:800;color:#16a34a;min-height:30px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">2. 바다 사진을 눌러 보세요.</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">동해</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q2_e')"><img src="https://images.wrks.ai/dalle/VO4yjl3b0ZeBg7xKjPKtwsFIprjLvO1aboomy6SQ.png"></div>
+        <div class="feedback" id="fb_da_q2_e"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#d97706;margin-bottom:6px;">서해</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q2_w')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png"></div>
+        <div class="feedback" id="fb_da_q2_w"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#15803d;margin-bottom:6px;">남해</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q2_s')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png"></div>
+        <div class="feedback" id="fb_da_q2_s"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card q-block">
+    <div class="q-title">3. 특징 사진을 눌러 보세요.</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">단조로운 해안선 (동해)</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q3_e')"><img src="https://images.wrks.ai/dalle/ahW6WqSjCxgny9yjVlsZaqTkTH5Bb5lTjvEKiynt.png"></div>
+        <div class="feedback" id="fb_da_q3_e"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#d97706;margin-bottom:6px;">갯벌 (서해)</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q3_w')"><img src="https://images.wrks.ai/dalle/mc6atP3pmvUYB7YzdlpaGvi23ymFklufty6Rbs9K.png"></div>
+        <div class="feedback" id="fb_da_q3_w"></div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:20px;font-weight:700;color:#15803d;margin-bottom:6px;">섬 (남해)</div>
+        <div class="choice-photo" onclick="tapPhoto(this,'da_q3_s')"><img src="https://images.wrks.ai/dalle/90PZOQewDmp9hBCbp63IfQZkJmgWgTsTg35ex2iM.png"></div>
+        <div class="feedback" id="fb_da_q3_s"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-row no-capture">
+    <button class="btn btn-light" onclick="show('report_menu')">◀ 뒤로</button>
+    <button class="btn save-btn" onclick="saveReport('rep_da','다')">📷 사진으로 저장하기</button>
+  </div>
+</div>
+
+<script>
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='rep_ga' || id==='rep_na' || id==='rep_da'){
+    setupHandwriting(id);
+  }
+}
+
+function goStep(sid, n){
+  for(let i=1;i<=3;i++){
+    const el = document.getElementById(sid+'_p'+i);
+    if(el) el.style.display = (i===n) ? 'block' : 'none';
+  }
+  const steps = document.querySelectorAll('#'+sid+'_steps .step');
+  steps.forEach((s,i)=>{ if(i<n) s.classList.add('active'); else s.classList.remove('active'); });
+  window.scrollTo(0,0);
+}
+
+function pickPhoto(el, isCorrect, group){
+  const siblings = el.parentElement.querySelectorAll('.choice-photo');
+  siblings.forEach(s=>s.classList.remove('correct','wrong'));
+  const fb = document.getElementById('fb_'+group);
+  if(isCorrect){
+    el.classList.add('correct');
+    if(fb){ fb.textContent = '✅ 잘했어요!'; fb.style.color = '#16a34a'; }
+  }else{
+    el.classList.add('wrong');
+    if(fb){ fb.textContent = '❌ 다시 골라볼까요?'; fb.style.color = '#dc2626'; }
+  }
+}
+
+function checkInput(el, answer){
+  const v = el.value.trim();
+  if(v === ''){ el.classList.remove('correct','wrong'); return; }
+  if(v === answer){
+    el.classList.remove('wrong'); el.classList.add('correct');
+  }else{
+    el.classList.remove('correct'); el.classList.add('wrong');
+  }
+}
+
+function tapSea(el, name, fbId){
+  el.classList.add('tapped');
+  el.style.fill = '#fbbf24';
+  const fb = document.getElementById(fbId);
+  if(fb){ fb.textContent = name; fb.style.color = '#16a34a'; }
+}
+
+function tapPhoto(el, group){
+  el.classList.add('correct');
+  const fb = document.getElementById('fb_'+group);
+  if(fb){ fb.textContent = '✅ 잘했어요!'; fb.style.color = '#16a34a'; }
+}
+
+function saveReport(reportId, prefix){
+  const el = document.getElementById(reportId);
+  const btns = el.querySelectorAll('.no-capture');
+  btns.forEach(b=>b.style.visibility='hidden');
+  // ensure inputs render their values
+  el.querySelectorAll('input').forEach(i=>{ i.setAttribute('value', i.value); });
+  if(typeof html2canvas === 'undefined'){
+    btns.forEach(b=>b.style.visibility='visible');
+    alert('저장 기능을 불러오지 못했어요. 인터넷 연결 후 다시 시도해 주세요.');
+    return;
+  }
+  html2canvas(el, {backgroundColor:'#eaf4fb', scale:2, useCORS:true, logging:false}).then(canvas=>{
+    btns.forEach(b=>b.style.visibility='visible');
+    const link = document.createElement('a');
+    const now = new Date();
+    const ts = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0')
+             + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+    link.download = '바다보고서_' + prefix + '_' + ts + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(err=>{
+    btns.forEach(b=>b.style.visibility='visible');
+    alert('저장에 실패했어요: ' + err.message);
+  });
+}
+
+/* ===== 손글씨 입력 ===== */
+function setupHandwriting(repId){
+  const root = document.getElementById(repId);
+  if(!root) return;
+  // 일반 input 변환 (단, 이미 변환된 것 제외)
+  root.querySelectorAll('input[type="text"], input.input-box').forEach(inp=>{
+    if(inp.dataset.hwConverted==='1') return;
+    convertInputToHandwriting(inp);
+  });
+}
+
+function convertInputToHandwriting(inp){
+  // 크기 결정 (style.width 우선)
+  let w = 0;
+  if(inp.style && inp.style.width){
+    w = parseInt(inp.style.width);
+  }
+  if(!w) w = inp.offsetWidth || 160;
+  if(w < 100) w = 140;
+  let h = 48;
+  // 이름/날짜 같은 짧은 input은 더 작게
+  const ph = inp.getAttribute('placeholder') || '';
+  if(ph.indexOf('이름')>=0) { w = 200; h = 50; }
+  if(ph.indexOf('2026')>=0) { w = 200; h = 50; }
+  // foreignObject 내부의 지도 정답 input
+  const inFO = inp.closest && inp.closest('foreignObject');
+  if(inFO){ w = 96; h = 44; }
+
+  const wrap = document.createElement('span');
+  wrap.className = 'hw-wrap';
+  wrap.style.display = 'inline-flex';
+  wrap.style.alignItems = 'center';
+  wrap.style.gap = '6px';
+  wrap.style.verticalAlign = 'middle';
+
+  const canvas = document.createElement('canvas');
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  canvas.className = 'hw-canvas';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = '#1e293b';
+  canvas._hwCtx = ctx;
+  canvas._hwScale = dpr;
+
+  let drawing = false, last = null;
+  function getPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left);
+    const y = (e.clientY - rect.top);
+    return { x, y };
+  }
+  canvas.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    drawing = true;
+    last = getPos(e);
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 1.5, 0, Math.PI*2);
+    ctx.fillStyle = '#1e293b';
+    ctx.fill();
+  });
+  canvas.addEventListener('pointermove', e=>{
+    if(!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(last.x, last.y);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    last = p;
+  });
+  function endDraw(e){ drawing = false; last = null; }
+  canvas.addEventListener('pointerup', endDraw);
+  canvas.addEventListener('pointercancel', endDraw);
+  canvas.addEventListener('pointerleave', endDraw);
+
+  const clr = document.createElement('button');
+  clr.type = 'button';
+  clr.className = 'hw-clear no-capture';
+  clr.textContent = '지우기';
+  clr.onclick = ()=>{ ctx.clearRect(0,0,canvas.width, canvas.height); };
+
+  wrap.appendChild(canvas);
+  wrap.appendChild(clr);
+
+  // foreignObject 내부에 있으면 폭/높이 조정
+  if(inFO){
+    inFO.setAttribute('width', String(w + 56));
+    inFO.setAttribute('height', String(h + 6));
+  }
+
+  inp.parentNode.replaceChild(wrap, inp);
+  inp.dataset.hwConverted = '1';
+}
+
+</script>
+</body>
+</html>
